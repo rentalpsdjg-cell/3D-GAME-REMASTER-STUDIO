@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D GAME REMASTER & VS RENDER STUDIO - HD Remaster & Battle Screen AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        arcade: ['Orbitron', 'sans-serif'],
+                    },
+                    colors: {
+                        arena: {
+                            950: '#07080c',
+                            900: '#0e1118',
+                            800: '#161b26',
+                            700: '#22293a',
+                            fire: '#f97316',
+                            cyan: '#06b6d4',
+                            gold: '#eab308'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0e1118; }
+        ::-webkit-scrollbar-thumb { background: #22293a; border-radius: 9999px; }
+        .glass-panel {
+            background: rgba(14, 17, 24, 0.86);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .tab-active {
+            border-color: #f97316;
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(6, 182, 212, 0.12));
+            box-shadow: 0 0 24px rgba(249, 115, 22, 0.18);
+        }
+    </style>
+</head>
+<body class="bg-arena-950 text-zinc-100 min-h-screen flex flex-col antialiased selection:bg-orange-500 selection:text-white">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-zinc-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="font-arcade font-extrabold text-sm sm:text-lg tracking-wider bg-gradient-to-r from-white via-orange-200 to-cyan-300 bg-clip-text text-transparent">
+                            3D GAME REMASTER STUDIO
+                        </h1>
+                        <span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-orange-500/15 text-orange-400 border border-orange-500/30">HD PRO</span>
+                    </div>
+                    <p class="text-[11px] text-zinc-400 hidden sm:block">Upscale Screenshot Game ke 3D Unreal HD + Auto Prompt Dialog VS</p>
+                </div>
+            </div>
+
+            <button onclick="resetAll()" class="px-3.5 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-medium text-zinc-200 border border-zinc-700 transition">
+                Reset Studio
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- Mode Selector -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button onclick="switchMode('remaster')" id="mode-btn-remaster" class="tab-active text-left p-4 rounded-2xl border border-zinc-800 transition-all">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-arcade font-bold text-orange-400">MODE 01 • IMAGE-TO-IMAGE</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-orange-500/20 text-orange-300 font-semibold">Rekomendasi</span>
+                </div>
+                <div class="font-bold text-base text-white">Remaster Screenshot Mentah → 3D HD</div>
+                <p class="text-xs text-zinc-400 mt-0.5">Upload tangkapan layar game biasa, AI render ulang jadi 3D tajam + otomatis ekstrak nama & dialog video.</p>
+            </button>
+
+            <button onclick="switchMode('scratch')" id="mode-btn-scratch" class="text-left p-4 rounded-2xl border border-zinc-800 bg-arena-900/70 hover:bg-arena-800/70 transition-all">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-xs font-arcade font-bold text-cyan-400">MODE 02 • TEXT-TO-IMAGE</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 font-semibold">Dari Nol</span>
+                </div>
+                <div class="font-bold text-base text-white">Buat Layar "1P vs COM" Baru dari Teks</div>
+                <p class="text-xs text-zinc-400 mt-0.5">Ketik nama 2 karakter & latar arena, AI otomatis merender layar VS 3D epik beserta prompt videonya.</p>
+            </button>
+        </div>
+
+        <!-- ==================== MODE 1: REMASTER SCREENSHOT ==================== -->
+        <section id="panel-remaster" class="space-y-6">
+            <div class="glass-panel rounded-2xl p-5 sm:p-6">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    
+                    <!-- Upload Area -->
+                    <div class="lg:col-span-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-zinc-400 mb-2">1. Upload Screenshot Mentah Game</label>
+                        <input type="file" id="raw-screenshot-input" accept="image/*" class="hidden" onchange="handleRawUpload(event)">
+                        <div onclick="document.getElementById('raw-screenshot-input').click()" id="upload-dropzone" class="aspect-video rounded-xl border-2 border-dashed border-zinc-700 hover:border-orange-500 bg-arena-950/90 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition overflow-hidden relative">
+                            <svg class="w-10 h-10 text-zinc-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <p class="text-xs sm:text-sm font-medium text-zinc-300">Klik untuk pilih screenshot game</p>
+                            <p class="text-[11px] text-zinc-500 mt-1">Mendukung JPG, PNG, WEBP (16:9 atau 9:16)</p>
+                        </div>
+                    </div>
+
+                    <!-- Remaster Settings -->
+                    <div class="lg:col-span-7 space-y-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Gaya Render 3D</label>
+                                <select id="remaster-style" class="w-full bg-arena-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                                    <option value="Unreal Engine 5 Next-Gen 3D Anime Fighter, rich volumetric lighting, crisp metallic textures, glowing fire VS effects" selected>Unreal Engine 5 (Next-Gen 3D HD)</option>
+                                    <option value="Cinematic 3D CGI Movie Render, ultra realistic cloth physics, dramatic rim light, deep shadows, 8k raytracing">Cinematic CGI Movie (Raytracing)</option>
+                                    <option value="High-Contrast Modern Arc System Works 2.5D Cel-Shaded 4K Remaster, razor sharp ink outlines, vibrant aura">Modern 2.5D Cel-Shaded 4K Sharp</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-zinc-400 mb-1">Pembersihan HUD / Watermark</label>
+                                <select id="hud-cleanup" class="w-full bg-arena-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-orange-500">
+                                    <option value="Keep character names, 1P, COM, Battle banner and central fiery VS logo, but remove small copyright text at bottom corner and status icon bars" selected>Pertahankan Nama & VS, Hapus Watermark/Bar</option>
+                                    <option value="Keep all original HUD text and numbers intact, just upscale everything to ultra crisp 4K">Pertahankan Semua Teks & HUD Asli</option>
+                                    <option value="Remove all UI text and HUD elements completely, leaving only the two fighters and fiery VS background">Bersihkan Semua Teks (Clean Art)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-zinc-400 mb-1">Detail Tambahan (Opsional)</label>
+                            <input type="text" id="remaster-extra" placeholder="Contoh: Tambahkan latar air terjun megah di belakang efek VS, pertajam tekstur rompi hijau..." class="w-full bg-arena-950 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500">
+                        </div>
+
+                        <button onclick="processRemaster()" id="btn-remaster" class="w-full py-3 rounded-xl bg-gradient-to-r from-orange-600 via-amber-500 to-yellow-500 hover:from-orange-500 hover:to-yellow-400 text-zinc-950 font-extrabold text-sm shadow-lg shadow-orange-600/25 transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span>RENDER ULANG KE 3D CINEMATIC HD</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== MODE 2: CREATE FROM SCRATCH ==================== -->
+        <section id="panel-scratch" class="hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 text-xs font-bold">GENERATOR DARI NOL</span>
+                        <h3 class="text-lg font-bold text-white mt-1">Buat Layar Pertarungan "1P vs COM" Kustom</h3>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl bg-arena-950/90 border border-orange-500/30 space-y-2.5">
+                        <span class="text-xs font-arcade font-bold text-orange-400">SISI KIRI (1P - ORANGE BRUSH)</span>
+                        <input type="text" id="p1-name" value="Yamato" placeholder="Nama Karakter 1P" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500">
+                        <textarea id="p1-desc" rows="2" placeholder="Deskripsi kostum & pose 1P..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-orange-500">Shinobi konoha berjaket hijau jonin, pelindung kepala logam penuh, tangan bersedekap gagah</textarea>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-arena-950/90 border border-yellow-500/30 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="text-xs font-arcade font-bold text-yellow-400">TENGAH & ARENA LATAR</span>
+                            <button type="button" onclick="randomizeArena()" class="px-2 py-0.5 rounded bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-300 text-[10px] font-bold border border-yellow-500/30 transition flex items-center gap-1">
+                                <span>🎲 Acak Arena</span>
+                            </button>
+                        </div>
+                        <input type="text" id="battle-title" value="Battle 1" placeholder="Teks Banner Atas (Misal: Battle 1 / Final)" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500">
+                        <select id="arena-preset" onchange="applyArenaPreset()" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-yellow-200 focus:outline-none focus:border-yellow-500">
+                            <option value="0" selected>1. Lembah Akhir (Air Terjun Tebing Batu)</option>
+                            <option value="1">2. Atap Gedung Pencakar Langit Malam (Neon Rain)</option>
+                            <option value="2">3. Kawah Gunung Berapi & Lava Membara</option>
+                            <option value="3">4. Kuil Kuno di Tengah Hutan Bambu Berkabut</option>
+                            <option value="4">5. Arena Turnamen Koloseum Batu Raksasa</option>
+                            <option value="5">6. Gurun Pasir Badai Petir & Reruntuhan</option>
+                            <option value="6">7. Puncak Gunung Salju Abadi & Badai Es</option>
+                            <option value="7">8. Jembatan Baja Pelabuhan Saat Matahari Terbenam</option>
+                            <option value="8">9. Dimensi Langit Pecah & Awan Kosmik Ungu</option>
+                            <option value="9">10. Hutan Rimba Malam dengan Cahaya Bulan Purnama</option>
+                            <option value="10">11. Ruang Tahta Istana Megah Terbakar</option>
+                            <option value="11">12. Padang Rumput Luas Berangin & Langit Senja</option>
+                        </select>
+                        <textarea id="arena-desc" rows="2" placeholder="Latar belakang arena..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-yellow-500">Air terjun megah berkabut di tebing batu raksasa (Lembah Akhir), efek api membara huruf VS raksasa di tengah</textarea>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-arena-950/90 border border-cyan-500/30 space-y-2.5">
+                        <span class="text-xs font-arcade font-bold text-cyan-400">SISI KANAN (COM - TEAL BRUSH)</span>
+                        <input type="text" id="p2-name" value="Sai" placeholder="Nama Karakter COM" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500">
+                        <textarea id="p2-desc" rows="2" placeholder="Deskripsi kostum & pose COM..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-cyan-500">Shinobi berambut hitam lurus, memegang kuas lukis tinta dan pedang tanto di punggung</textarea>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                    <select id="scratch-ratio" class="bg-arena-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
+                        <option value="16:9" selected>Rasio 16:9 (Landscape YouTube / PC)</option>
+                        <option value="9:16">Rasio 9:16 (Vertical Reels / Shorts)</option>
+                    </select>
+                    <button onclick="generateFromScratch()" id="btn-scratch" class="px-6 py-3 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-600 to-orange-500 hover:from-cyan-400 hover:to-orange-400 text-white font-extrabold text-sm shadow-lg transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                        <span>GENERATE BATTLE VS SCREEN 3D HD</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== RESULT SHOWCASE & VIDEO PROMPT ==================== -->
+        <section id="result-section" class="hidden space-y-6">
+            <div class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4 border border-orange-500/30">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold text-xs">HASIL RENDER 3D HD</span>
+                        <span id="render-time" class="text-xs text-zinc-400"></span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="downloadRenderedImage()" id="download-render-btn" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-lg shadow-emerald-600/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Unduh Gambar HD</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Comparison / Output Viewer -->
+                <div id="output-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div id="before-box" class="hidden space-y-1.5">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Sebelum (Screenshot Mentah)</span>
+                        <div class="aspect-video rounded-xl overflow-hidden bg-arena-950 border border-zinc-800">
+                            <img id="before-img" class="w-full h-full object-contain" alt="Before">
+                        </div>
+                    </div>
+                    <div id="after-box" class="col-span-full space-y-1.5">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-orange-400">Sesudah (3D Cinematic HD Remaster)</span>
+                        <div id="after-img-container" class="aspect-video rounded-xl overflow-hidden bg-arena-950 border border-orange-500/40 flex items-center justify-center">
+                            <!-- Rendered image here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Auto Video Intro Prompt Box -->
+                <div class="pt-4 border-t border-zinc-800 space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Prompt Video AI Otomatis (Nama & Dialog Karakter Terdeteksi)</span>
+                            <p id="detected-fighters-info" class="text-[11px] text-zinc-400 mt-0.5">Mendeteksi nama karakter dari gambar & menyusun dialog pertarungan...</p>
+                        </div>
+                        <button onclick="copyVideoPrompt()" class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-zinc-950 text-xs font-bold transition">Copy Prompt Video</button>
+                    </div>
+                    <textarea id="battle-video-prompt" rows="5" class="w-full bg-arena-950 border border-zinc-800 rounded-xl p-3 text-xs sm:text-sm text-zinc-200 leading-relaxed focus:outline-none focus:border-cyan-500"></textarea>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-zinc-800 border border-zinc-700 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 text-sm font-medium">
+        <span id="toast-icon" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+        <span id="toast-msg">Berhasil!</span>
+    </div>
+
+    <script>
+        const apiKey = "";
+        let rawImageBase64 = null;
+        let rawImageMime = null;
+        let rawImageDataUrl = null;
+        let latestRenderedDataUrl = null;
+
+        const ARENA_PRESETS = [
+            "Air terjun megah berkabut di tebing batu raksasa (Lembah Akhir), efek api membara huruf VS raksasa di tengah",
+            "Atap gedung pencakar langit kota metropolitan malam hari di bawah hujan rintik dan lampu neon cyberpunk, efek percikan petir & api VS di tengah",
+            "Kawah gunung berapi aktif dengan aliran lava merah membara, asap vulkanik, dan batu obsidian tajam, efek api VS raksasa di tengah",
+            "Halaman kuil Jepang kuno di tengah hutan bambu berkabut tebal dengan lentera batu menyala, efek kobaran api VS di tengah",
+            "Arena turnamen bela diri koloseum batu raksasa di bawah langit cerah berawan dramatis dengan sorak penonton samar di kejauhan, efek api VS di tengah",
+            "Gurun pasir luas dengan reruntuhan pilar kuno dan sambaran petir kuning di langit badai, efek energi api VS di tengah",
+            "Puncak tebing gunung salju abadi dengan badai es kristal berkilauan dan aurora di langit malam, efek api biru-oranye VS di tengah",
+            "Jembatan gantung baja pelabuhan megah saat matahari terbenam jingga kemerahan dengan pantulan cahaya di laut, efek api VS di tengah",
+            "Dimensi langit retak penuh pecahan kristal ruang angkasa dan nebula kosmik ungu-emas, efek ledakan energi VS di tengah",
+            "Hutan rimba gelap misterius disinari cahaya bulan purnama raksasa dan kabut biru di permukaan tanah, efek api VS di tengah",
+            "Aula ruang tahta istana megah dengan pilar emas dan tirai merah yang terbakar bara api, efek kobaran api VS di tengah",
+            "Padang rumput ilalang luas tertiup angin kencang di bawah langit senja dramatis dan awan emas, efek api VS di tengah"
+        ];
+
+        function applyArenaPreset() {
+            const idx = parseInt(document.getElementById('arena-preset').value, 10);
+            if (!isNaN(idx) && ARENA_PRESETS[idx]) {
+                document.getElementById('arena-desc').value = ARENA_PRESETS[idx];
+            }
+        }
+
+        function randomizeArena() {
+            const select = document.getElementById('arena-preset');
+            const randomIdx = Math.floor(Math.random() * ARENA_PRESETS.length);
+            select.value = randomIdx.toString();
+            applyArenaPreset();
+            showToast(`Arena diganti ke: ${select.options[randomIdx].text}`);
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            document.getElementById('toast-icon').className = `w-2.5 h-2.5 rounded-full ${type === 'error' ? 'bg-rose-500' : 'bg-emerald-400'}`;
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3200);
+        }
+
+        function switchMode(mode) {
+            const remBtn = document.getElementById('mode-btn-remaster');
+            const scrBtn = document.getElementById('mode-btn-scratch');
+            const remPanel = document.getElementById('panel-remaster');
+            const scrPanel = document.getElementById('panel-scratch');
+
+            if (mode === 'remaster') {
+                remBtn.classList.add('tab-active');
+                remBtn.classList.remove('bg-arena-900/70');
+                scrBtn.classList.remove('tab-active');
+                scrBtn.classList.add('bg-arena-900/70');
+                remPanel.classList.remove('hidden');
+                scrPanel.classList.add('hidden');
+            } else {
+                scrBtn.classList.add('tab-active');
+                scrBtn.classList.remove('bg-arena-900/70');
+                remBtn.classList.remove('tab-active');
+                remBtn.classList.add('bg-arena-900/70');
+                scrPanel.classList.remove('hidden');
+                remPanel.classList.add('hidden');
+            }
+        }
+
+        function handleRawUpload(event) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                rawImageDataUrl = e.target.result;
+                const commaIdx = rawImageDataUrl.indexOf(',');
+                const meta = rawImageDataUrl.substring(0, commaIdx);
+                rawImageBase64 = rawImageDataUrl.substring(commaIdx + 1);
+                const mimeMatch = meta.match(/data:(.*?);base64/);
+                rawImageMime = mimeMatch ? mimeMatch[1] : 'image/png';
+
+                const dz = document.getElementById('upload-dropzone');
+                dz.innerHTML = `<img src="${rawImageDataUrl}" class="w-full h-full object-contain" alt="Preview Mentah">`;
+                showToast('Screenshot berhasil dimuat! Klik tombol Render Ulang.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function fetchWithRetry(url, options, maxRetries = 4) {
+            let delay = 1000;
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const res = await fetch(url, options);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    return await res.json();
+                } catch (err) {
+                    if (i === maxRetries - 1) throw err;
+                    await new Promise(r => setTimeout(r, delay));
+                    delay *= 2;
+                }
+            }
+        }
+
+        async function callImageEngine(promptText, aspectRatio = "16:9", includeSourceImage = false) {
+            const parts = [{ text: promptText }];
+            if (includeSourceImage && rawImageBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: rawImageMime || 'image/png',
+                        data: rawImageBase64
+                    }
+                });
+            }
+
+            const payload = {
+                contents: [{ role: 'user', parts: parts }],
+                generationConfig: {
+                    responseModalities: ['TEXT', 'IMAGE'],
+                    imageConfig: { aspectRatio: aspectRatio }
+                }
+            };
+
+            const models = [
+                'gemini-2.5-flash-image-preview',
+                'gemini-2.0-flash-exp-image-generation',
+                'gemini-3.1-flash-image'
+            ];
+
+            for (const model of models) {
+                try {
+                    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                    const data = await fetchWithRetry(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    }, 2);
+                    const imgPart = data?.candidates?.[0]?.content?.parts?.find(p => p.inlineData && p.inlineData.data);
+                    if (imgPart) {
+                        return `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+                    }
+                } catch (e) {
+                    console.warn(`Fallback dari ${model}:`, e);
+                }
+            }
+
+            // Fallback ke Imagen 3
+            const imagenUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+            const imagenRes = await fetchWithRetry(imagenUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    instances: [{ prompt: promptText }],
+                    parameters: { sampleCount: 1, aspectRatio: aspectRatio }
+                })
+            }, 2);
+            const b64 = imagenRes?.predictions?.[0]?.bytesBase64Encoded;
+            if (b64) return `data:image/png;base64,${b64}`;
+
+            throw new Error("Gagal merender gambar.");
+        }
+
+        // Ekstrak Nama Karakter dari Gambar & Buat Prompt Video Sesuai Template Bosq
+        async function generateSmartBattlePromptFromImage(base64Data, mimeType, ratio = "16:9", fallbackChar1 = "Fighter 1", fallbackChar2 = "Fighter 2") {
+            const infoEl = document.getElementById('detected-fighters-info');
+            const promptTa = document.getElementById('battle-video-prompt');
+            infoEl.textContent = "AI sedang membaca nama karakter di gambar & meracik dialog pertarungan...";
+
+            const analysisPrompt = `Analyze this fighting game versus image. 
+            1. Identify the exact name of the character on the left (1P) and the character on the right (COM). If text names are visible (like "Yamato" and "Sai"), read them accurately. Otherwise use "${fallbackChar1}" and "${fallbackChar2}".
+            2. Write a short, badass, in-character pre-battle taunt dialogue line for Character 1 (in Indonesian matching anime style, concise max 12 words).
+            3. Write a sharp, cool, in-character response dialogue line for Character 2 (in Indonesian matching anime style, concise max 12 words).`;
+
+            const parts = [{ text: analysisPrompt }];
+            if (base64Data) {
+                parts.push({
+                    inlineData: {
+                        mimeType: mimeType || 'image/png',
+                        data: base64Data
+                    }
+                });
+            }
+
+            const payload = {
+                contents: [{ role: 'user', parts: parts }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            char1Name: { type: "STRING" },
+                            char2Name: { type: "STRING" },
+                            dialog1: { type: "STRING" },
+                            dialog2: { type: "STRING" }
+                        },
+                        required: ["char1Name", "char2Name", "dialog1", "dialog2"]
+                    }
+                }
+            };
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 2);
+                const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+                const c1 = parsed.char1Name || fallbackChar1;
+                const c2 = parsed.char2Name || fallbackChar2;
+                const d1 = parsed.dialog1 || "Mari kita lihat seberapa kuat dirimu sekarang!";
+                const d2 = parsed.dialog2 || "Jangan meremehkanku, bersiaplah!";
+
+                infoEl.innerHTML = `Terdeteksi: <span class="text-orange-400 font-bold">${c1}</span> vs <span class="text-cyan-400 font-bold">${c2}</span>`;
+                promptTa.value = `An anime fighting game screen featuring ${c1} on the left and ${c2} on the right with a large "VS" in the center, cinematic camera zoom and dramatic lighting. ${c1} speaks first with natural mouth movements, delivering the line: "${d1}". Then, ${c2} responds by speaking with natural mouth movements, delivering the line: "${d2}". Vibrant anime art style, 4k, smooth motion --ar ${ratio}`;
+            } catch (err) {
+                console.warn("Fallback prompt template:", err);
+                infoEl.innerHTML = `Karakter: <span class="text-orange-400 font-bold">${fallbackChar1}</span> vs <span class="text-cyan-400 font-bold">${fallbackChar2}</span>`;
+                promptTa.value = `An anime fighting game screen featuring ${fallbackChar1} on the left and ${fallbackChar2} on the right with a large "VS" in the center, cinematic camera zoom and dramatic lighting. ${fallbackChar1} speaks first with natural mouth movements, delivering the line: "Bersiaplah, aku tidak akan menahan diri!". Then, ${fallbackChar2} responds by speaking with natural mouth movements, delivering the line: "Tunjukkan kemampuan terbaikmu!". Vibrant anime art style, 4k, smooth motion --ar ${ratio}`;
+            }
+        }
+
+        // Perbaikan Fungsi Unduh Gambar via Blob URL agar 100% Jalan di Semua Browser
+        function downloadRenderedImage() {
+            if (!latestRenderedDataUrl) {
+                showToast('Belum ada gambar hasil render untuk diunduh!', 'error');
+                return;
+            }
+            try {
+                const arr = latestRenderedDataUrl.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                const blob = new Blob([u8arr], { type: mime });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = blobUrl;
+                link.download = `3d-game-remaster-hd-${Date.now()}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+                showToast('Gambar HD sedang diunduh ke perangkat Anda!');
+            } catch (err) {
+                console.error(err);
+                const win = window.open();
+                if (win) {
+                    win.document.write(`<img src="${latestRenderedDataUrl}" style="max-width:100%;height:auto;" />`);
+                    showToast('Gambar dibuka di tab baru — klik kanan lalu Simpan Gambar!');
+                } else {
+                    showToast('Klik kanan pada gambar hasil lalu pilih "Simpan gambar sebagai..."', 'error');
+                }
+            }
+        }
+
+        async function processRemaster() {
+            if (!rawImageBase64) {
+                showToast('Silakan upload screenshot game mentah terlebih dahulu!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-remaster');
+            const resSec = document.getElementById('result-section');
+            const beforeBox = document.getElementById('before-box');
+            const afterBox = document.getElementById('after-box');
+            const afterContainer = document.getElementById('after-img-container');
+            const style = document.getElementById('remaster-style').value;
+            const cleanup = document.getElementById('hud-cleanup').value;
+            const extra = document.getElementById('remaster-extra').value.trim();
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            resSec.classList.remove('hidden');
+            beforeBox.classList.remove('hidden');
+            document.getElementById('before-img').src = rawImageDataUrl;
+            afterBox.classList.remove('col-span-full');
+            afterContainer.innerHTML = `<div class="flex flex-col items-center gap-3 p-8"><div class="w-10 h-10 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin"></div><p class="text-xs text-zinc-300 font-medium">Merender ulang jadi kualitas 3D Cinematic HD...</p></div>`;
+
+            generateSmartBattlePromptFromImage(rawImageBase64, rawImageMime, "16:9", "Player 1", "COM");
+
+            const startTime = Date.now();
+            const prompt = `Remaster and transform this raw game screenshot into an ultra-high-definition ${style}. Preserve the exact characters, poses, facial expressions, outfits, headbands, and composition from the source image, but upgrade every surface with rich 3D depth, realistic fabric folds, metallic reflections, sharp eyes, and cinematic lighting. ${cleanup}. Enhance the background environment into a detailed 8K scenic backdrop, sharpen the painted brush strokes behind both fighters, and make the central glowing "VS" emblem blaze with realistic sparks and fire. ${extra}`;
+
+            try {
+                const hdUrl = await callImageEngine(prompt, "16:9", true);
+                latestRenderedDataUrl = hdUrl;
+                const elapsed = Math.round((Date.now() - startTime) / 1000);
+                document.getElementById('render-time').textContent = `Selesai dirender dalam ${elapsed} detik`;
+                afterContainer.innerHTML = `<img src="${hdUrl}" class="w-full h-full object-contain" alt="3D HD Remaster">`;
+                showToast('Render 3D HD & Prompt Dialog berhasil dibuat!');
+            } catch (err) {
+                console.error(err);
+                afterContainer.innerHTML = `<p class="text-xs text-rose-400 p-6">Gagal merender gambar. Silakan coba klik tombol lagi.</p>`;
+                showToast('Gagal merender gambar.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            }
+        }
+
+        async function generateFromScratch() {
+            const p1Name = document.getElementById('p1-name').value.trim() || 'Player 1';
+            const p1Desc = document.getElementById('p1-desc').value.trim();
+            const p2Name = document.getElementById('p2-name').value.trim() || 'COM';
+            const p2Desc = document.getElementById('p2-desc').value.trim();
+            const battleTitle = document.getElementById('battle-title').value.trim() || 'Battle 1';
+            const arenaDesc = document.getElementById('arena-desc').value.trim();
+            const ratio = document.getElementById('scratch-ratio').value;
+
+            const btn = document.getElementById('btn-scratch');
+            const resSec = document.getElementById('result-section');
+            const beforeBox = document.getElementById('before-box');
+            const afterBox = document.getElementById('after-box');
+            const afterContainer = document.getElementById('after-img-container');
+
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+            resSec.classList.remove('hidden');
+            beforeBox.classList.add('hidden');
+            afterBox.classList.add('col-span-full');
+            afterContainer.innerHTML = `<div class="flex flex-col items-center gap-3 p-10"><div class="w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div><p class="text-xs text-zinc-300 font-medium">Merender layar Battle VS 3D HD dari nol...</p></div>`;
+
+            const startTime = Date.now();
+            const prompt = `High-end 3D Unreal Engine 5 anime fighting game versus screen UI, ${ratio} aspect ratio. On the left side, standing heroically in front of a vibrant orange-gold diagonal ink brush stroke: ${p1Desc}, with red glowing "1P" badge at top-left and bold white brush-calligraphy name "${p1Name}" with black outline above the character. On the right side, standing heroically in front of a vibrant teal-cyan diagonal ink brush stroke: ${p2Desc}, with green glowing "COM" badge at top-right and bold white brush-calligraphy name "${p2Name}" with black outline above the character. At top center, a sleek dark wooden banner reading "${battleTitle}". In the exact center between both characters, a massive blazing golden-orange fiery "VS" emblem with glowing embers. Background: ${arenaDesc}. Crisp 8K 3D cinematic rendering, dramatic rim lighting, sharp textures.`;
+
+            try {
+                const hdUrl = await callImageEngine(prompt, ratio, false);
+                latestRenderedDataUrl = hdUrl;
+                const elapsed = Math.round((Date.now() - startTime) / 1000);
+                document.getElementById('render-time').textContent = `Selesai dirender dalam ${elapsed} detik`;
+                afterContainer.innerHTML = `<img src="${hdUrl}" class="w-full h-full object-contain max-h-[560px]" alt="Battle VS Screen">`;
+
+                const commaIdx = hdUrl.indexOf(',');
+                const b64 = hdUrl.substring(commaIdx + 1);
+                await generateSmartBattlePromptFromImage(b64, 'image/png', ratio, p1Name, p2Name);
+
+                showToast('Battle VS Screen 3D HD & Prompt Dialog berhasil dibuat!');
+            } catch (err) {
+                console.error(err);
+                afterContainer.innerHTML = `<p class="text-xs text-rose-400 p-6">Gagal membuat Battle Screen. Silakan coba lagi.</p>`;
+                showToast('Gagal membuat gambar.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50');
+            }
+        }
+
+        function copyVideoPrompt() {
+            const ta = document.getElementById('battle-video-prompt');
+            ta.select();
+            document.execCommand('copy');
+            showToast('Prompt video berhasil disalin!');
+        }
+
+        function resetAll() {
+            rawImageBase64 = null;
+            rawImageMime = null;
+            rawImageDataUrl = null;
+            latestRenderedDataUrl = null;
+            document.getElementById('raw-screenshot-input').value = '';
+            document.getElementById('upload-dropzone').innerHTML = `
+                <svg class="w-10 h-10 text-zinc-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <p class="text-xs sm:text-sm font-medium text-zinc-300">Klik untuk pilih screenshot game</p>
+                <p class="text-[11px] text-zinc-500 mt-1">Mendukung JPG, PNG, WEBP (16:9 atau 9:16)</p>
+            `;
+            document.getElementById('result-section').classList.add('hidden');
+            showToast('Studio berhasil direset!');
+        }
+    </script>
+</body>
+</html>
