@@ -91,11 +91,11 @@
 
             <button onclick="switchMode('scratch')" id="mode-btn-scratch" class="text-left p-4 rounded-2xl border border-zinc-800 bg-arena-900/70 hover:bg-arena-800/70 transition-all">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="text-xs font-arcade font-bold text-cyan-400">MODE 02 • TEXT-TO-IMAGE</span>
-                    <span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 font-semibold">Dari Nol</span>
+                    <span class="text-xs font-arcade font-bold text-cyan-400">MODE 02 • AUTO CHAR UPLOAD & VS</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] bg-cyan-500/20 text-cyan-300 font-semibold">Auto Scan AI</span>
                 </div>
-                <div class="font-bold text-base text-white">Buat Layar "1P vs COM" Baru dari Teks</div>
-                <p class="text-xs text-zinc-400 mt-0.5">Ketik nama 2 karakter & latar arena, AI otomatis merender layar VS 3D epik beserta prompt videonya.</p>
+                <div class="font-bold text-base text-white">Buat Layar "1P vs COM" (Upload Foto / Teks)</div>
+                <p class="text-xs text-zinc-400 mt-0.5">Upload foto karakter 1P & COM (AI otomatis isi nama + kostum) atau ketik manual untuk render VS 3D akurat.</p>
             </button>
         </div>
 
@@ -152,56 +152,129 @@
             </div>
         </section>
 
-        <!-- ==================== MODE 2: CREATE FROM SCRATCH ==================== -->
+        <!-- ==================== MODE 2: CREATE FROM SCRATCH / AUTO CHAR UPLOAD ==================== -->
         <section id="panel-scratch" class="hidden space-y-6">
-            <div class="glass-panel rounded-2xl p-5 sm:p-6 space-y-4">
-                <div class="flex items-center justify-between">
+            <div class="glass-panel rounded-2xl p-5 sm:p-6 space-y-5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
                     <div>
-                        <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 text-xs font-bold">GENERATOR DARI NOL</span>
+                        <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 text-xs font-bold">AUTO UPLOAD KARAKTER & GENERATOR VS</span>
                         <h3 class="text-lg font-bold text-white mt-1">Buat Layar Pertarungan "1P vs COM" Kustom</h3>
+                        <p class="text-xs text-zinc-400">Upload foto karakter di bawah agar AI otomatis mengisi nama, kostum, & mengunci wujud karakter supaya hasil render 100% akurat.</p>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="p-4 rounded-xl bg-arena-950/90 border border-orange-500/30 space-y-2.5">
-                        <span class="text-xs font-arcade font-bold text-orange-400">SISI KIRI (1P - ORANGE BRUSH)</span>
-                        <input type="text" id="p1-name" value="Yamato" placeholder="Nama Karakter 1P" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500">
-                        <textarea id="p1-desc" rows="2" placeholder="Deskripsi kostum & pose 1P..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-orange-500">Shinobi konoha berjaket hijau jonin, pelindung kepala logam penuh, tangan bersedekap gagah</textarea>
+                    <!-- SISI KIRI (1P) -->
+                    <div class="p-4 rounded-xl bg-arena-950/90 border border-orange-500/30 space-y-3 flex flex-col">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-arcade font-bold text-orange-400">SISI KIRI (1P - ORANGE)</span>
+                            <span id="p1-scan-badge" class="hidden px-2 py-0.5 rounded bg-orange-500/20 text-orange-300 text-[10px] font-semibold animate-pulse">AI Memindai...</span>
+                        </div>
+
+                        <!-- Auto Upload Foto Karakter 1P -->
+                        <input type="file" id="p1-file-input" accept="image/*" class="hidden" onchange="handleScratchCharUpload(event, 'p1')">
+                        <div id="p1-upload-box" onclick="document.getElementById('p1-file-input').click()" class="relative h-28 rounded-xl border-2 border-dashed border-orange-500/40 hover:border-orange-400 bg-arena-900/90 flex flex-col items-center justify-center p-2 text-center cursor-pointer transition overflow-hidden group">
+                            <svg class="w-6 h-6 text-orange-400/80 mb-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            <span class="text-xs font-semibold text-orange-200">Upload Foto Karakter 1P</span>
+                            <span class="text-[10px] text-zinc-400">Otomatis deteksi nama & kostum</span>
+                        </div>
+                        <div id="p1-preview-bar" class="hidden flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-orange-500/10 border border-orange-500/25">
+                            <span class="text-[11px] text-orange-300 font-medium truncate">✓ Foto Referensi 1P Aktif</span>
+                            <button type="button" onclick="clearScratchRef('p1')" class="text-[11px] font-bold text-rose-400 hover:text-rose-300 shrink-0">Hapus Foto</button>
+                        </div>
+
+                        <div class="space-y-2 flex-1">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider text-zinc-400 mb-1">Nama Karakter 1P</label>
+                                <input type="text" id="p1-name" value="Yamato" placeholder="Nama Karakter 1P" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider text-zinc-400 mb-1">Deskripsi Kostum & Pose 1P</label>
+                                <textarea id="p1-desc" rows="3" placeholder="Deskripsi kostum & pose 1P..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-orange-500">Shinobi konoha berjaket hijau jonin, pelindung kepala logam penuh, tangan bersedekap gagah</textarea>
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-arena-950/90 border border-yellow-500/30 space-y-2.5">
+                    <!-- TENGAH & ARENA LATAR -->
+                    <div class="p-4 rounded-xl bg-arena-950/90 border border-yellow-500/30 space-y-3 flex flex-col">
                         <div class="flex items-center justify-between gap-2">
                             <span class="text-xs font-arcade font-bold text-yellow-400">TENGAH & ARENA LATAR</span>
                             <button type="button" onclick="randomizeArena()" class="px-2 py-0.5 rounded bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-300 text-[10px] font-bold border border-yellow-500/30 transition flex items-center gap-1">
                                 <span>🎲 Acak Arena</span>
                             </button>
                         </div>
-                        <input type="text" id="battle-title" value="Battle 1" placeholder="Teks Banner Atas (Misal: Battle 1 / Final)" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500">
-                        <select id="arena-preset" onchange="applyArenaPreset()" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-yellow-200 focus:outline-none focus:border-yellow-500">
-                            <option value="0" selected>1. Lembah Akhir (Air Terjun Tebing Batu)</option>
-                            <option value="1">2. Atap Gedung Pencakar Langit Malam (Neon Rain)</option>
-                            <option value="2">3. Kawah Gunung Berapi & Lava Membara</option>
-                            <option value="3">4. Kuil Kuno di Tengah Hutan Bambu Berkabut</option>
-                            <option value="4">5. Arena Turnamen Koloseum Batu Raksasa</option>
-                            <option value="5">6. Gurun Pasir Badai Petir & Reruntuhan</option>
-                            <option value="6">7. Puncak Gunung Salju Abadi & Badai Es</option>
-                            <option value="7">8. Jembatan Baja Pelabuhan Saat Matahari Terbenam</option>
-                            <option value="8">9. Dimensi Langit Pecah & Awan Kosmik Ungu</option>
-                            <option value="9">10. Hutan Rimba Malam dengan Cahaya Bulan Purnama</option>
-                            <option value="10">11. Ruang Tahta Istana Megah Terbakar</option>
-                            <option value="11">12. Padang Rumput Luas Berangin & Langit Senja</option>
-                        </select>
-                        <textarea id="arena-desc" rows="2" placeholder="Latar belakang arena..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-yellow-500">Air terjun megah berkabut di tebing batu raksasa (Lembah Akhir), efek api membara huruf VS raksasa di tengah</textarea>
+
+                        <!-- Optional Upload Foto Latar Arena -->
+                        <input type="file" id="arena-file-input" accept="image/*" class="hidden" onchange="handleScratchCharUpload(event, 'arena')">
+                        <div id="arena-upload-box" onclick="document.getElementById('arena-file-input').click()" class="relative h-28 rounded-xl border-2 border-dashed border-yellow-500/35 hover:border-yellow-400 bg-arena-900/90 flex flex-col items-center justify-center p-2 text-center cursor-pointer transition overflow-hidden group">
+                            <svg class="w-6 h-6 text-yellow-400/80 mb-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span class="text-xs font-semibold text-yellow-200">Upload Foto Arena (Opsional)</span>
+                            <span class="text-[10px] text-zinc-400">Atau pilih dari 12 preset di bawah</span>
+                        </div>
+                        <div id="arena-preview-bar" class="hidden flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-yellow-500/10 border border-yellow-500/25">
+                            <span class="text-[11px] text-yellow-300 font-medium truncate">✓ Foto Latar Arena Aktif</span>
+                            <button type="button" onclick="clearScratchRef('arena')" class="text-[11px] font-bold text-rose-400 hover:text-rose-300 shrink-0">Hapus Foto</button>
+                        </div>
+
+                        <div class="space-y-2 flex-1">
+                            <input type="text" id="battle-title" value="Battle 1" placeholder="Teks Banner Atas (Misal: Battle 1 / Final)" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-yellow-500">
+                            <select id="arena-preset" onchange="applyArenaPreset()" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-2.5 py-1.5 text-xs text-yellow-200 focus:outline-none focus:border-yellow-500">
+                                <option value="0" selected>1. Lembah Akhir (Air Terjun Tebing Batu)</option>
+                                <option value="1">2. Atap Gedung Pencakar Langit Malam (Neon Rain)</option>
+                                <option value="2">3. Kawah Gunung Berapi & Lava Membara</option>
+                                <option value="3">4. Kuil Kuno di Tengah Hutan Bambu Berkabut</option>
+                                <option value="4">5. Arena Turnamen Koloseum Batu Raksasa</option>
+                                <option value="5">6. Gurun Pasir Badai Petir & Reruntuhan</option>
+                                <option value="6">7. Puncak Gunung Salju Abadi & Badai Es</option>
+                                <option value="7">8. Jembatan Baja Pelabuhan Saat Matahari Terbenam</option>
+                                <option value="8">9. Dimensi Langit Pecah & Awan Kosmik Ungu</option>
+                                <option value="9">10. Hutan Rimba Malam dengan Cahaya Bulan Purnama</option>
+                                <option value="10">11. Ruang Tahta Istana Megah Terbakar</option>
+                                <option value="11">12. Padang Rumput Luas Berangin & Langit Senja</option>
+                            </select>
+                            <textarea id="arena-desc" rows="2" placeholder="Latar belakang arena..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-yellow-500">Air terjun megah berkabut di tebing batu raksasa (Lembah Akhir), efek api membara huruf VS raksasa di tengah</textarea>
+                        </div>
                     </div>
 
-                    <div class="p-4 rounded-xl bg-arena-950/90 border border-cyan-500/30 space-y-2.5">
-                        <span class="text-xs font-arcade font-bold text-cyan-400">SISI KANAN (COM - TEAL BRUSH)</span>
-                        <input type="text" id="p2-name" value="Sai" placeholder="Nama Karakter COM" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500">
-                        <textarea id="p2-desc" rows="2" placeholder="Deskripsi kostum & pose COM..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-cyan-500">Shinobi berambut hitam lurus, memegang kuas lukis tinta dan pedang tanto di punggung</textarea>
+                    <!-- SISI KANAN (COM) -->
+                    <div class="p-4 rounded-xl bg-arena-950/90 border border-cyan-500/30 space-y-3 flex flex-col">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-arcade font-bold text-cyan-400">SISI KANAN (COM - TEAL)</span>
+                            <span id="p2-scan-badge" class="hidden px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 text-[10px] font-semibold animate-pulse">AI Memindai...</span>
+                        </div>
+
+                        <!-- Auto Upload Foto Karakter COM -->
+                        <input type="file" id="p2-file-input" accept="image/*" class="hidden" onchange="handleScratchCharUpload(event, 'p2')">
+                        <div id="p2-upload-box" onclick="document.getElementById('p2-file-input').click()" class="relative h-28 rounded-xl border-2 border-dashed border-cyan-500/40 hover:border-cyan-400 bg-arena-900/90 flex flex-col items-center justify-center p-2 text-center cursor-pointer transition overflow-hidden group">
+                            <svg class="w-6 h-6 text-cyan-400/80 mb-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                            </svg>
+                            <span class="text-xs font-semibold text-cyan-200">Upload Foto Karakter COM</span>
+                            <span class="text-[10px] text-zinc-400">Otomatis deteksi nama & kostum</span>
+                        </div>
+                        <div id="p2-preview-bar" class="hidden flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/25">
+                            <span class="text-[11px] text-cyan-300 font-medium truncate">✓ Foto Referensi COM Aktif</span>
+                            <button type="button" onclick="clearScratchRef('p2')" class="text-[11px] font-bold text-rose-400 hover:text-rose-300 shrink-0">Hapus Foto</button>
+                        </div>
+
+                        <div class="space-y-2 flex-1">
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider text-zinc-400 mb-1">Nama Karakter COM</label>
+                                <input type="text" id="p2-name" value="Sai" placeholder="Nama Karakter COM" class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] uppercase tracking-wider text-zinc-400 mb-1">Deskripsi Kostum & Pose COM</label>
+                                <textarea id="p2-desc" rows="3" placeholder="Deskripsi kostum & pose COM..." class="w-full bg-arena-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-cyan-500">Shinobi berambut hitam lurus, memegang kuas lukis tinta dan pedang tanto di punggung</textarea>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
                     <select id="scratch-ratio" class="bg-arena-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500">
                         <option value="16:9" selected>Rasio 16:9 (Landscape YouTube / PC)</option>
                         <option value="9:16">Rasio 9:16 (Vertical Reels / Shorts)</option>
@@ -275,6 +348,13 @@
         let rawImageDataUrl = null;
         let latestRenderedDataUrl = null;
 
+        // State untuk Referensi Karakter & Arena di Mode 02
+        const scratchRefs = {
+            p1: { base64: null, mime: null, dataUrl: null },
+            p2: { base64: null, mime: null, dataUrl: null },
+            arena: { base64: null, mime: null, dataUrl: null }
+        };
+
         const ARENA_PRESETS = [
             "Air terjun megah berkabut di tebing batu raksasa (Lembah Akhir), efek api membara huruf VS raksasa di tengah",
             "Atap gedung pencakar langit kota metropolitan malam hari di bawah hujan rintik dan lampu neon cyberpunk, efek percikan petir & api VS di tengah",
@@ -310,7 +390,7 @@
             document.getElementById('toast-msg').textContent = msg;
             document.getElementById('toast-icon').className = `w-2.5 h-2.5 rounded-full ${type === 'error' ? 'bg-rose-500' : 'bg-emerald-400'}`;
             toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3200);
+            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3400);
         }
 
         function switchMode(mode) {
@@ -356,6 +436,150 @@
             reader.readAsDataURL(file);
         }
 
+        // Handle Upload Foto Karakter (1P / COM) & Arena di Mode 02 + Auto Scan AI
+        function handleScratchCharUpload(event, slot) {
+            const file = event.target.files?.[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const dataUrl = e.target.result;
+                const commaIdx = dataUrl.indexOf(',');
+                const meta = dataUrl.substring(0, commaIdx);
+                const base64 = dataUrl.substring(commaIdx + 1);
+                const mimeMatch = meta.match(/data:(.*?);base64/);
+                const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+
+                scratchRefs[slot] = { base64, mime, dataUrl };
+
+                const box = document.getElementById(`${slot}-upload-box`);
+                box.innerHTML = `<img src="${dataUrl}" class="w-full h-full object-contain rounded-lg" alt="Referensi ${slot}">`;
+                document.getElementById(`${slot}-preview-bar`).classList.remove('hidden');
+
+                if (slot === 'p1' || slot === 'p2') {
+                    await autoDetectCharacterDetails(slot, base64, mime);
+                } else if (slot === 'arena') {
+                    await autoDetectArenaDetails(base64, mime);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // AI Otomatis Membaca Nama & Kostum Karakter dari Foto yang Di-upload
+        async function autoDetectCharacterDetails(slot, base64Data, mimeType) {
+            const badge = document.getElementById(`${slot}-scan-badge`);
+            const nameInput = document.getElementById(`${slot}-name`);
+            const descInput = document.getElementById(`${slot}-desc`);
+
+            badge.classList.remove('hidden');
+            showToast(`Memindai karakter ${slot.toUpperCase()} dengan AI...`);
+
+            const scanPrompt = `Analyze this character image carefully for a 3D anime fighting game versus screen.
+            1. Identify the exact name of the character (e.g., "Naruto Uzumaki", "Sasuke Uchiha", "Goku", "Itachi", "Kakashi", etc.). If it is an original/unrecognized character, give a cool fitting warrior title/name (2-3 words max).
+            2. Write a vivid, detailed visual description in Indonesian (max 35 words) describing their exact hair color/style, headband/mask/face marks, outfit/armor colors, weapons/accessories, and heroic fighting stance so a 3D renderer reproduces them accurately.`;
+
+            const payload = {
+                contents: [{
+                    role: 'user',
+                    parts: [
+                        { text: scanPrompt },
+                        { inlineData: { mimeType: mimeType || 'image/png', data: base64Data } }
+                    ]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            characterName: { type: "STRING" },
+                            visualDescription: { type: "STRING" }
+                        },
+                        required: ["characterName", "visualDescription"]
+                    }
+                }
+            };
+
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 2);
+                const parsed = JSON.parse(data.candidates[0].content.parts[0].text);
+                if (parsed.characterName) nameInput.value = parsed.characterName;
+                if (parsed.visualDescription) descInput.value = parsed.visualDescription;
+                showToast(`Karakter ${slot.toUpperCase()} terdeteksi: ${parsed.characterName}!`);
+            } catch (err) {
+                console.warn(`Gagal auto-scan ${slot}:`, err);
+                showToast(`Foto ${slot.toUpperCase()} terkunci sebagai acuan render!`, 'success');
+            } finally {
+                badge.classList.add('hidden');
+            }
+        }
+
+        // AI Otomatis Membaca Suasana Latar Arena jika Foto Arena Di-upload
+        async function autoDetectArenaDetails(base64Data, mimeType) {
+            const arenaInput = document.getElementById('arena-desc');
+            showToast('Membaca suasana latar arena dari foto...');
+            const payload = {
+                contents: [{
+                    role: 'user',
+                    parts: [
+                        { text: "Describe this background environment/scenery in Indonesian (max 25 words) for an epic anime fighting game stage, adding mention of a blazing fiery VS emblem in the center." },
+                        { inlineData: { mimeType: mimeType || 'image/png', data: base64Data } }
+                    ]
+                }]
+            };
+            try {
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+                const data = await fetchWithRetry(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                }, 2);
+                const desc = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+                if (desc) arenaInput.value = desc;
+                showToast('Latar arena otomatis terisi dari foto!');
+            } catch (e) {
+                console.warn('Gagal auto-scan arena:', e);
+            }
+        }
+
+        function clearScratchRef(slot) {
+            scratchRefs[slot] = { base64: null, mime: null, dataUrl: null };
+            document.getElementById(`${slot}-file-input`).value = '';
+            document.getElementById(`${slot}-preview-bar`).classList.add('hidden');
+
+            const box = document.getElementById(`${slot}-upload-box`);
+            if (slot === 'p1') {
+                box.innerHTML = `
+                    <svg class="w-6 h-6 text-orange-400/80 mb-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    <span class="text-xs font-semibold text-orange-200">Upload Foto Karakter 1P</span>
+                    <span class="text-[10px] text-zinc-400">Otomatis deteksi nama & kostum</span>
+                `;
+            } else if (slot === 'p2') {
+                box.innerHTML = `
+                    <svg class="w-6 h-6 text-cyan-400/80 mb-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    <span class="text-xs font-semibold text-cyan-200">Upload Foto Karakter COM</span>
+                    <span class="text-[10px] text-zinc-400">Otomatis deteksi nama & kostum</span>
+                `;
+            } else {
+                box.innerHTML = `
+                    <svg class="w-6 h-6 text-yellow-400/80 mb-1 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span class="text-xs font-semibold text-yellow-200">Upload Foto Arena (Opsional)</span>
+                    <span class="text-[10px] text-zinc-400">Atau pilih dari 12 preset di bawah</span>
+                `;
+            }
+            showToast(`Foto referensi ${slot.toUpperCase()} dihapus.`);
+        }
+
         async function fetchWithRetry(url, options, maxRetries = 4) {
             let delay = 1000;
             for (let i = 0; i < maxRetries; i++) {
@@ -371,15 +595,20 @@
             }
         }
 
-        async function callImageEngine(promptText, aspectRatio = "16:9", includeSourceImage = false) {
+        // Mendukung multi-reference images (array of { base64, mime }) agar karakter 1P & COM akurat
+        async function callImageEngine(promptText, aspectRatio = "16:9", referenceImages = []) {
             const parts = [{ text: promptText }];
-            if (includeSourceImage && rawImageBase64) {
-                parts.push({
-                    inlineData: {
-                        mimeType: rawImageMime || 'image/png',
-                        data: rawImageBase64
+            if (Array.isArray(referenceImages)) {
+                for (const ref of referenceImages) {
+                    if (ref && ref.base64) {
+                        parts.push({
+                            inlineData: {
+                                mimeType: ref.mime || 'image/png',
+                                data: ref.base64
+                            }
+                        });
                     }
-                });
+                }
             }
 
             const payload = {
@@ -557,7 +786,7 @@
             const prompt = `Remaster and transform this raw game screenshot into an ultra-high-definition ${style}. Preserve the exact characters, poses, facial expressions, outfits, headbands, and composition from the source image, but upgrade every surface with rich 3D depth, realistic fabric folds, metallic reflections, sharp eyes, and cinematic lighting. ${cleanup}. Enhance the background environment into a detailed 8K scenic backdrop, sharpen the painted brush strokes behind both fighters, and make the central glowing "VS" emblem blaze with realistic sparks and fire. ${extra}`;
 
             try {
-                const hdUrl = await callImageEngine(prompt, "16:9", true);
+                const hdUrl = await callImageEngine(prompt, "16:9", [{ base64: rawImageBase64, mime: rawImageMime }]);
                 latestRenderedDataUrl = hdUrl;
                 const elapsed = Math.round((Date.now() - startTime) / 1000);
                 document.getElementById('render-time').textContent = `Selesai dirender dalam ${elapsed} detik`;
@@ -593,13 +822,34 @@
             resSec.classList.remove('hidden');
             beforeBox.classList.add('hidden');
             afterBox.classList.add('col-span-full');
-            afterContainer.innerHTML = `<div class="flex flex-col items-center gap-3 p-10"><div class="w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div><p class="text-xs text-zinc-300 font-medium">Merender layar Battle VS 3D HD dari nol...</p></div>`;
+            afterContainer.innerHTML = `<div class="flex flex-col items-center gap-3 p-10"><div class="w-10 h-10 border-4 border-cyan-500/30 border-t-cyan-400 rounded-full animate-spin"></div><p class="text-xs text-zinc-300 font-medium">Merender layar Battle VS 3D HD dengan presisi tinggi...</p></div>`;
+
+            // Kumpulkan gambar referensi yang di-upload user (1P, COM, Arena) agar gambar tidak meleset
+            const refImages = [];
+            let refInstructions = "";
+            let refIdx = 1;
+
+            if (scratchRefs.p1.base64) {
+                refImages.push({ base64: scratchRefs.p1.base64, mime: scratchRefs.p1.mime });
+                refInstructions += ` Reference Image #${refIdx} shows the EXACT appearance, face, hair, and outfit of the LEFT fighter (${p1Name}) — strictly preserve their exact visual identity in 3D HD.`;
+                refIdx++;
+            }
+            if (scratchRefs.p2.base64) {
+                refImages.push({ base64: scratchRefs.p2.base64, mime: scratchRefs.p2.mime });
+                refInstructions += ` Reference Image #${refIdx} shows the EXACT appearance, face, hair, and outfit of the RIGHT fighter (${p2Name}) — strictly preserve their exact visual identity in 3D HD.`;
+                refIdx++;
+            }
+            if (scratchRefs.arena.base64) {
+                refImages.push({ base64: scratchRefs.arena.base64, mime: scratchRefs.arena.mime });
+                refInstructions += ` Reference Image #${refIdx} shows the background stage environment — use this exact location and atmosphere for the arena backdrop.`;
+                refIdx++;
+            }
 
             const startTime = Date.now();
-            const prompt = `High-end 3D Unreal Engine 5 anime fighting game versus screen UI, ${ratio} aspect ratio. On the left side, standing heroically in front of a vibrant orange-gold diagonal ink brush stroke: ${p1Desc}, with red glowing "1P" badge at top-left and bold white brush-calligraphy name "${p1Name}" with black outline above the character. On the right side, standing heroically in front of a vibrant teal-cyan diagonal ink brush stroke: ${p2Desc}, with green glowing "COM" badge at top-right and bold white brush-calligraphy name "${p2Name}" with black outline above the character. At top center, a sleek dark wooden banner reading "${battleTitle}". In the exact center between both characters, a massive blazing golden-orange fiery "VS" emblem with glowing embers. Background: ${arenaDesc}. Crisp 8K 3D cinematic rendering, dramatic rim lighting, sharp textures.`;
+            const prompt = `High-end 3D Unreal Engine 5 anime fighting game versus screen UI, ${ratio} aspect ratio.${refInstructions} On the left side, standing heroically in front of a vibrant orange-gold diagonal ink brush stroke: ${p1Desc}, with red glowing "1P" badge at top-left and bold white brush-calligraphy name "${p1Name}" with black outline above the character. On the right side, standing heroically in front of a vibrant teal-cyan diagonal ink brush stroke: ${p2Desc}, with green glowing "COM" badge at top-right and bold white brush-calligraphy name "${p2Name}" with black outline above the character. At top center, a sleek dark wooden banner reading "${battleTitle}". In the exact center between both characters, a massive blazing golden-orange fiery "VS" emblem with glowing embers. Background: ${arenaDesc}. Crisp 8K 3D cinematic rendering, dramatic rim lighting, sharp textures.`;
 
             try {
-                const hdUrl = await callImageEngine(prompt, ratio, false);
+                const hdUrl = await callImageEngine(prompt, ratio, refImages);
                 latestRenderedDataUrl = hdUrl;
                 const elapsed = Math.round((Date.now() - startTime) / 1000);
                 document.getElementById('render-time').textContent = `Selesai dirender dalam ${elapsed} detik`;
@@ -640,6 +890,9 @@
                 <p class="text-xs sm:text-sm font-medium text-zinc-300">Klik untuk pilih screenshot game</p>
                 <p class="text-[11px] text-zinc-500 mt-1">Mendukung JPG, PNG, WEBP (16:9 atau 9:16)</p>
             `;
+            clearScratchRef('p1');
+            clearScratchRef('p2');
+            clearScratchRef('arena');
             document.getElementById('result-section').classList.add('hidden');
             showToast('Studio berhasil direset!');
         }
